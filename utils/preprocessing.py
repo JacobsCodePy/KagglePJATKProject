@@ -62,18 +62,22 @@ def preprocess_publication_date(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def preprocess_currency(df: pd.DataFrame) -> pd.DataFrame:
+def preprocess_currency(df: pd.DataFrame, invert: bool = False) -> pd.DataFrame:
     """
     Convert currency in `EUR` to `PLN` using rate 4.3.
     If other currrency occurs raises an ValueError.
     """
+    euro_constant = 4.3
     if 'Cena' not in df.columns:
         logger.warning("Preprocessing currency did not found `Cena` column. Skipping.")
         return df
     column = 'Waluta'
     df['Cena'] = df['Cena'].astype(float)
     mask = df[column] == 'EUR'
-    df.loc[mask, 'Cena'] *= 4.3
+    if not invert:
+        df.loc[mask, 'Cena'] *= euro_constant
+    else:
+        df.loc[mask, 'Cena'] /= euro_constant
     logger.info(f"Amount of samples with foreign currency  : {mask.sum()}")
     if not np.all(np.isin(df.loc[~df[column].isna(), column].unique(), ['PLN', 'EUR'])):
         raise ValueError(f"At least one of the currencies {df[column].unique()} is unknown.")

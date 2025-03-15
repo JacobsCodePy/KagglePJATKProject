@@ -5,3 +5,5 @@ plotly
 seaborn
 tqdm
 scikit-learn
+numba
+xgboost
