@@ -1,2 +1,3 @@
 # KagglePJATKProject
-Hopes are high, but skills said bye.
+If you torture the data long enough,
+it will confess to anything.
