@@ -84,6 +84,46 @@ def preprocess_currency(df: pd.DataFrame, invert: bool = False) -> pd.DataFrame:
     return df
 
 
+def preprocess_equipment_list_binary(df: pd.DataFrame) -> pd.DataFrame:
+    def parse_equipment(equip_str):
+        """
+        Prases equipment from string format to a list
+        :param equip_str: String equipment
+        :return: Equipment list
+        """
+        if pd.isna(equip_str) or equip_str == '' or equip_str == 'nan':
+            return []
+
+        if isinstance(equip_str, list):
+            return equip_str
+
+        try:
+            cleaned_str = equip_str.replace("'", '"')
+            evaluated = ast.literal_eval(cleaned_str)
+            return evaluated if isinstance(evaluated, list) else []
+        except Exception as e:
+            return []
+
+    df['Lista_wyposazenia'] = df['Wyposazenie'].apply(parse_equipment)
+    df['Count_wyposazenia'] = df['Lista_wyposazenia'].apply(len)
+
+    # Finds the equipment observable in at least 5% of the rows
+    all_equipment = {}
+    for equip_list in df['Lista_wyposazenia']:
+        for item in equip_list:
+            all_equipment[item] = all_equipment.get(item, 0) + 1
+
+    min_count = int(0.05 * len(df))
+    common_equipment = [item for item, count in all_equipment.items() if count >= min_count]
+
+    # Add equipment as binary features
+    for item in common_equipment:
+        feature_name = f"wyp_{item.lower().replace(' ', '_').replace('(', '').replace(')', '')}"
+        df[feature_name] = df['Lista_wyposazenia'].apply(lambda x: 1 if item in x else 0)
+
+    return df
+
+
 BasicPreprocessPipeline = PreprocessPipeline([
     preprocess_equipment_list,
     preprocess_publication_date,
@@ -91,5 +131,8 @@ BasicPreprocessPipeline = PreprocessPipeline([
 ])
 
 
-
-
+ExtendedPreprocessPipeline = PreprocessPipeline([
+    preprocess_equipment_list_binary,
+    preprocess_publication_date,
+    preprocess_currency,
+])
