@@ -7,3 +7,4 @@ tqdm
 scikit-learn
 numba
 xgboost
+scipy~=1.15.2
